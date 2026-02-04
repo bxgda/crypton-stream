@@ -1,3 +1,5 @@
+using System;
+
 namespace src.Common;
 
 public class FileMetadata
