@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using System;
+using System.IO;
 
 using System.Text;
 using src.Core;
@@ -24,41 +25,67 @@ sealed class Program
 
     static void Main(string[] args)
     {
-        Console.WriteLine("--- Testiranje Simple Substitution Algoritma ---");
+        string tajnaRec = "elfak2026";
 
-        // 1. Test sa tajnom rečju (tvoja ideja sa pomerajem)
-        string tajnaRec = "ELFAK";
-        var cipherRec = new SimpleSubstitution(tajnaRec);
+        // --- TEST 1: STRING ---
+        Console.WriteLine("=== Test 1: String šifrovanje ===");
+        string originalniTekst = "Ovo je tajna poruka za A5/2!";
+        byte[] tekstBajtovi = Encoding.UTF8.GetBytes(originalniTekst);
 
-        string originalniTekst = "Pozdrav sa elektronskog!";
-        byte[] podaci = Encoding.UTF8.GetBytes(originalniTekst);
+        A5_2 cipherString = new A5_2(tajnaRec);
+        byte[] sifrovaniTekst = cipherString.Process(tekstBajtovi);
 
-        Console.WriteLine($"\nOriginalni tekst: {originalniTekst}");
+        A5_2 decipherString = new A5_2(tajnaRec); // Resetujemo registre za dešifrovanje
+        byte[] desifrovaniTekstBajtovi = decipherString.Process(sifrovaniTekst);
+        string konacniTekst = Encoding.UTF8.GetString(desifrovaniTekstBajtovi);
 
-        // Šifrovanje
-        byte[] sifrovano = cipherRec.Encrypt(podaci);
-        Console.WriteLine($"Šifrovano (bajtovi): {BitConverter.ToString(sifrovano)}");
+        Console.WriteLine($"Original: {originalniTekst}");
+        Console.WriteLine($"Rezultat: {konacniTekst}");
+        Console.WriteLine(originalniTekst == konacniTekst ? "✅ STRING USPEŠNO DEŠIFROVAN" : "❌ GREŠKA U STRINGU");
 
-        // Dešifrovanje
-        byte[] desifrovano = cipherRec.Decrypt(sifrovano);
-        string rezultat = Encoding.UTF8.GetString(desifrovano);
-        Console.WriteLine($"Dešifrovano tekst: {rezultat}");
 
-        // Provera
-        if (originalniTekst == rezultat)
+        // --- TEST 2: FAJL (SLIKA) ---
+        Console.WriteLine("\n=== Test 2: Fajl (slika) šifrovanje ===");
+
+        // Putanja je dva nivoa iznad 'bin/Debug/net10.0' ako pokrećeš sa dotnet run
+        // Ili samo stavi apsolutnu putanju radi testa
+        string putanjaDoSlike = "../test.png";
+        string putanjaSifrovana = "../test_sifrovano.bin";
+        string putanjaDesifrovana = "../test_povraceno.png";
+
+        if (!File.Exists(putanjaDoSlike))
         {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("USPEH: Tekstovi se podudaraju!");
-            Console.ResetColor();
-        }
-        else
-        {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("GREŠKA: Tekstovi nisu isti!");
-            Console.ResetColor();
+            Console.WriteLine($"❌ Greška: Fajl {putanjaDoSlike} nije pronađen u korenu projekta!");
+            return;
         }
 
-        Console.WriteLine("\n------------------------------------------------");
+        // 1. Učitaj bajtove slike
+        byte[] originalnaSlika = File.ReadAllBytes(putanjaDoSlike);
+        Console.WriteLine($"Fajl učitan. Veličina: {originalnaSlika.Length} bajtova.");
+
+        // 2. Šifruj
+        A5_2 cipherFile = new A5_2(tajnaRec);
+        byte[] sifrovanaSlika = cipherFile.Process(originalnaSlika);
+        File.WriteAllBytes(putanjaSifrovana, sifrovanaSlika);
+        Console.WriteLine("Fajl šifrovan i sačuvan kao 'test_sifrovano.bin'.");
+
+        // 3. Dešifruj
+        A5_2 decipherFile = new A5_2(tajnaRec);
+        byte[] desifrovanaSlika = decipherFile.Process(sifrovanaSlika);
+        File.WriteAllBytes(putanjaDesifrovana, desifrovanaSlika);
+        Console.WriteLine("Fajl dešifrovan i sačuvan kao 'test_povraceno.jpg'.");
+
+        // 4. Provera integriteta
+        bool uspeh = true;
+        for (int i = 0; i < originalnaSlika.Length; i++)
+        {
+            if (originalnaSlika[i] != desifrovanaSlika[i])
+            {
+                uspeh = false;
+                break;
+            }
+        }
+        Console.WriteLine(uspeh ? "✅ SLIKA IDENTIČNA ORIGINALU!" : "❌ SLIKA JE OŠTEĆENA!");
     }
 
 }
