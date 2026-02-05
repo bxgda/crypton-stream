@@ -1,9 +1,11 @@
 ﻿using Avalonia;
 using System;
 using System.IO;
-
 using System.Text;
+
 using src.Core;
+using src.Common;
+using src.FileSystem;
 
 namespace src;
 
@@ -23,55 +25,58 @@ sealed class Program
     //         .WithInterFont()
     //         .LogToTrace();
 
+
     static void Main(string[] args)
     {
-        Console.WriteLine("=== MD5 Integrity Test (Simple Substitution) ===");
+        Console.WriteLine("=== FINALNI INTEGRACIONI TEST (FileHandler) ===\n");
 
-        string putanjaDoSlike = "../poster.pdf";
-        string tajnaRec = "MojaLozinka123";
+        // Konfiguracija
+        string sourceFile = "../poster.pdf"; // Slika u root-u
+        string outputFolder = "../TestOutput";
+        string lozinka = "SigurnaLozinka123";
+        EncryptionAlgorithm algoritam = EncryptionAlgorithm.A5_2;
 
-        if (!File.Exists(putanjaDoSlike))
+        // Priprema foldera
+        if (!Directory.Exists(outputFolder))
+            Directory.CreateDirectory(outputFolder);
+
+        if (!File.Exists(sourceFile))
         {
-            Console.WriteLine("❌ Greška: Prvo ubaci 'test.jpg' u koren projekta!");
+            Console.WriteLine($"❌ Greška: Nedostaje {sourceFile}");
             return;
         }
 
-        // 1. Učitaj originalni fajl
-        byte[] originalniBajtovi = File.ReadAllBytes(putanjaDoSlike);
-
-        // 2. Izračunaj MD5 originala
-        string hashOriginala = MD5_Hasher.CalculateMD5(originalniBajtovi);
-        Console.WriteLine($"[1] MD5 Originala:    {hashOriginala}");
-
-        // 3. Šifruj pomoću SimpleSubstitution
-        SimpleSubstitution cipher = new SimpleSubstitution(tajnaRec);
-        byte[] sifrovaniBajtovi = cipher.Encrypt(originalniBajtovi);
-
-        // Opciono: Izračunaj hash šifrovanog fajla (čisto da vidiš da je drugačiji)
-        string hashSifrata = MD5_Hasher.CalculateMD5(sifrovaniBajtovi);
-        Console.WriteLine($"[2] MD5 Šifrata:     {hashSifrata} (Mora biti drugačiji)");
-
-        // 4. Dešifruj
-        byte[] desifrovaniBajtovi = cipher.Decrypt(sifrovaniBajtovi);
-
-        // 5. Izračunaj MD5 dešifrovanog fajla
-        string hashDesifrovanog = MD5_Hasher.CalculateMD5(desifrovaniBajtovi);
-        Console.WriteLine($"[3] MD5 Dešifrovanog: {hashDesifrovanog}");
-
-        // 6. Finalna provera
-        Console.WriteLine("\n------------------------------------------------");
-        if (hashOriginala == hashDesifrovanog)
+        try
         {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("✅ USPEH: Heševi su identični! Integritet je očuvan.");
+            FileHandler handler = new FileHandler();
+
+            // 1. KORAK: Šifrovanje i čuvanje (Koristimo tvoju metodu)
+            Console.WriteLine("[KORAK 1] Pokrećem EncryptAndSave...");
+            handler.EncryptAndSave(sourceFile, outputFolder, lozinka, algoritam);
+
+            // 2. KORAK: Pronalaženje kreiranog .crypt fajla
+            string fileNameOnly = Path.GetFileNameWithoutExtension(sourceFile);
+            string encryptedFilePath = Path.Combine(outputFolder, fileNameOnly + ".crypt");
+
+            // 3. KORAK: Dešifrovanje i čuvanje JSON-a (Koristimo tvoju novu metodu)
+            Console.WriteLine("\n[KORAK 2] Pokrećem UnpackAndSave...");
+            handler.UnpackAndSave(encryptedFilePath, outputFolder, lozinka);
+
+            // 4. KORAK: Provera rezultata na disku
+            Console.WriteLine("\n[KORAK 3] Provera fajlova u folderu:");
+            string[] files = Directory.GetFiles(outputFolder);
+            foreach (var file in files)
+            {
+                Console.WriteLine($" - Pronađen fajl: {Path.GetFileName(file)} ({new FileInfo(file).Length} bytes)");
+            }
+
         }
-        else
+        catch (Exception ex)
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("❌ GREŠKA: Heševi se ne poklapaju! Algoritam menja podatke.");
+            Console.WriteLine($"\n❌ Greška tokom izvršavanja: {ex.Message}");
         }
-        Console.ResetColor();
-        Console.WriteLine("------------------------------------------------");
+
+        Console.WriteLine("\n=== Test završen ===");
     }
 
 }
