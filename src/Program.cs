@@ -25,67 +25,53 @@ sealed class Program
 
     static void Main(string[] args)
     {
-        string tajnaRec = "elfak2026";
+        Console.WriteLine("=== MD5 Integrity Test (Simple Substitution) ===");
 
-        // --- TEST 1: STRING ---
-        Console.WriteLine("=== Test 1: String šifrovanje ===");
-        string originalniTekst = "Ovo je tajna poruka za A5/2!";
-        byte[] tekstBajtovi = Encoding.UTF8.GetBytes(originalniTekst);
-
-        A5_2 cipherString = new A5_2(tajnaRec);
-        byte[] sifrovaniTekst = cipherString.Process(tekstBajtovi);
-
-        A5_2 decipherString = new A5_2(tajnaRec); // Resetujemo registre za dešifrovanje
-        byte[] desifrovaniTekstBajtovi = decipherString.Process(sifrovaniTekst);
-        string konacniTekst = Encoding.UTF8.GetString(desifrovaniTekstBajtovi);
-
-        Console.WriteLine($"Original: {originalniTekst}");
-        Console.WriteLine($"Rezultat: {konacniTekst}");
-        Console.WriteLine(originalniTekst == konacniTekst ? "✅ STRING USPEŠNO DEŠIFROVAN" : "❌ GREŠKA U STRINGU");
-
-
-        // --- TEST 2: FAJL (SLIKA) ---
-        Console.WriteLine("\n=== Test 2: Fajl (slika) šifrovanje ===");
-
-        // Putanja je dva nivoa iznad 'bin/Debug/net10.0' ako pokrećeš sa dotnet run
-        // Ili samo stavi apsolutnu putanju radi testa
-        string putanjaDoSlike = "../test.png";
-        string putanjaSifrovana = "../test_sifrovano.bin";
-        string putanjaDesifrovana = "../test_povraceno.png";
+        string putanjaDoSlike = "../poster.pdf";
+        string tajnaRec = "MojaLozinka123";
 
         if (!File.Exists(putanjaDoSlike))
         {
-            Console.WriteLine($"❌ Greška: Fajl {putanjaDoSlike} nije pronađen u korenu projekta!");
+            Console.WriteLine("❌ Greška: Prvo ubaci 'test.jpg' u koren projekta!");
             return;
         }
 
-        // 1. Učitaj bajtove slike
-        byte[] originalnaSlika = File.ReadAllBytes(putanjaDoSlike);
-        Console.WriteLine($"Fajl učitan. Veličina: {originalnaSlika.Length} bajtova.");
+        // 1. Učitaj originalni fajl
+        byte[] originalniBajtovi = File.ReadAllBytes(putanjaDoSlike);
 
-        // 2. Šifruj
-        A5_2 cipherFile = new A5_2(tajnaRec);
-        byte[] sifrovanaSlika = cipherFile.Process(originalnaSlika);
-        File.WriteAllBytes(putanjaSifrovana, sifrovanaSlika);
-        Console.WriteLine("Fajl šifrovan i sačuvan kao 'test_sifrovano.bin'.");
+        // 2. Izračunaj MD5 originala
+        string hashOriginala = MD5_Hasher.CalculateMD5(originalniBajtovi);
+        Console.WriteLine($"[1] MD5 Originala:    {hashOriginala}");
 
-        // 3. Dešifruj
-        A5_2 decipherFile = new A5_2(tajnaRec);
-        byte[] desifrovanaSlika = decipherFile.Process(sifrovanaSlika);
-        File.WriteAllBytes(putanjaDesifrovana, desifrovanaSlika);
-        Console.WriteLine("Fajl dešifrovan i sačuvan kao 'test_povraceno.jpg'.");
+        // 3. Šifruj pomoću SimpleSubstitution
+        SimpleSubstitution cipher = new SimpleSubstitution(tajnaRec);
+        byte[] sifrovaniBajtovi = cipher.Encrypt(originalniBajtovi);
 
-        // 4. Provera integriteta
-        bool uspeh = true;
-        for (int i = 0; i < originalnaSlika.Length; i++)
+        // Opciono: Izračunaj hash šifrovanog fajla (čisto da vidiš da je drugačiji)
+        string hashSifrata = MD5_Hasher.CalculateMD5(sifrovaniBajtovi);
+        Console.WriteLine($"[2] MD5 Šifrata:     {hashSifrata} (Mora biti drugačiji)");
+
+        // 4. Dešifruj
+        byte[] desifrovaniBajtovi = cipher.Decrypt(sifrovaniBajtovi);
+
+        // 5. Izračunaj MD5 dešifrovanog fajla
+        string hashDesifrovanog = MD5_Hasher.CalculateMD5(desifrovaniBajtovi);
+        Console.WriteLine($"[3] MD5 Dešifrovanog: {hashDesifrovanog}");
+
+        // 6. Finalna provera
+        Console.WriteLine("\n------------------------------------------------");
+        if (hashOriginala == hashDesifrovanog)
         {
-            if (originalnaSlika[i] != desifrovanaSlika[i])
-            {
-                uspeh = false;
-                break;
-            }
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("✅ USPEH: Heševi su identični! Integritet je očuvan.");
         }
-        Console.WriteLine(uspeh ? "✅ SLIKA IDENTIČNA ORIGINALU!" : "❌ SLIKA JE OŠTEĆENA!");
+        else
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("❌ GREŠKA: Heševi se ne poklapaju! Algoritam menja podatke.");
+        }
+        Console.ResetColor();
+        Console.WriteLine("------------------------------------------------");
     }
 
 }
