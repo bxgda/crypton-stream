@@ -3,6 +3,8 @@ using System.Linq;
 
 namespace src.Core;
 
+// implementirano pomocu https://gist.github.com/ameerkat/07a748c9b571289711ebaf61f4b596e9
+
 public static class MD5_Hasher
 {
     static int[] s = new int[64] {
