@@ -31,7 +31,7 @@ sealed class Program
         Console.WriteLine("=== FINALNI INTEGRACIONI TEST (FileHandler) ===\n");
 
         // Konfiguracija
-        string sourceFile = "../poster.pdf"; // Slika u root-u
+        string sourceFile = "../test.png"; // Slika u root-u
         string outputFolder = "../TestOutput";
         string lozinka = "SigurnaLozinka123";
         EncryptionAlgorithm algoritam = EncryptionAlgorithm.A5_2;
