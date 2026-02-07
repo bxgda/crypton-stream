@@ -1,5 +1,8 @@
 using System;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using Avalonia.Input;
 
 namespace src.Core;
 
@@ -7,6 +10,7 @@ public class SimpleSubstitution
 {
     private readonly byte[] _key;
     private readonly byte[] _inverseKey;
+    private const int SegmentSize = 1024;   // 1KB
 
     public SimpleSubstitution(byte[] key)
     {
@@ -78,8 +82,16 @@ public class SimpleSubstitution
     {
         byte[] result = new byte[data.Length];
 
-        for (int i = 0; i < data.Length; i++)
-            result[i] = _key[data[i]];
+        int totalSegments = (data.Length + SegmentSize - 1) / SegmentSize;
+
+        Parallel.For(0, totalSegments, segmentIndex =>
+        {
+            int offset = segmentIndex * SegmentSize;
+            int length = Math.Min(SegmentSize, data.Length - offset);
+
+            for (int i = 0; i < length; i++)
+                result[offset + i] = _key[data[offset + i]];
+        });
 
         return result;
     }
@@ -88,9 +100,79 @@ public class SimpleSubstitution
     {
         byte[] result = new byte[data.Length];
 
-        for (int i = 0; i < data.Length; i++)
-            result[i] = _inverseKey[data[i]];
+        int totalSegments = (data.Length + SegmentSize - 1) / SegmentSize;
+
+        Parallel.For(0, totalSegments, segmentIndex =>
+        {
+            int offset = segmentIndex * SegmentSize;
+            int length = Math.Min(SegmentSize, data.Length - offset);
+
+            for (int i = 0; i < length; i++)
+                result[offset + i] = _inverseKey[data[offset + i]];
+        });
 
         return result;
+    }
+
+    public void EncryptStream(Stream input, Stream output)
+    {
+        ProcessStream(input, output, _key);
+    }
+
+    public void DecryptStream(Stream input, Stream output)
+    {
+        ProcessStream(input, output, _inverseKey);
+    }
+
+    private void ProcessStream(Stream input, Stream output, byte[] table)
+    {
+        int maxParallelism = Environment.ProcessorCount;
+        int batchSegments = maxParallelism * 64;
+        int batchBufferSize = batchSegments * SegmentSize;
+
+        byte[] buffer = new byte[batchBufferSize];
+        byte[] resultBuffer = new byte[batchBufferSize];
+
+        int bytesRead;
+
+        while (true)
+        {
+            bytesRead = ReadStream(input, buffer, batchBufferSize);
+
+            if (bytesRead == 0)
+                break;
+
+            int actualSegments = (bytesRead + SegmentSize - 1) / SegmentSize;
+            int totalBytes = bytesRead;
+
+            Parallel.For(0, actualSegments, new ParallelOptions { MaxDegreeOfParallelism = maxParallelism },
+                segmentIndex =>
+                {
+                    int offset = segmentIndex * SegmentSize;
+                    int length = Math.Min(SegmentSize, totalBytes - offset);
+
+                    for (int i = 0; i < length; i++)
+                        resultBuffer[offset + i] = table[buffer[offset + i]];
+                });
+
+            output.Write(resultBuffer, 0, bytesRead);
+        }
+    }
+
+    private static int ReadStream(Stream stream, byte[] buffer, int count)
+    {
+        int totalRead = 0;
+
+        while (totalRead < count)
+        {
+            int bytesRead = stream.Read(buffer, totalRead, count - totalRead);
+
+            if (bytesRead == 0)
+                break;
+
+            totalRead += bytesRead;
+        }
+
+        return totalRead;
     }
 }
