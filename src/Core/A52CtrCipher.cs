@@ -12,46 +12,17 @@ public class A52CtrCipher
     private readonly ushort _initialNonce;
     private readonly int _maxDegreeOfParallelism;
 
-    public A52CtrCipher(string secretWord, int maxThreads = -1)
+    public A52CtrCipher(string secretWord, ushort? nonce = null)
     {
         _key = DeriveKey(secretWord);
-        var ctr = new CtrMode();
-        _initialNonce = ctr.InitialNonce;
 
-        if (maxThreads > 0)
-            _maxDegreeOfParallelism = maxThreads;
+        if (nonce != null)
+            _initialNonce = (ushort)nonce;
         else
-            _maxDegreeOfParallelism = Environment.ProcessorCount;
-    }
-
-    public A52CtrCipher(string secretWord, ushort nonce, int maxThreads = -1)
-    {
-        _key = DeriveKey(secretWord);
-        _initialNonce = nonce;
-
-        if (maxThreads > 0)
-            _maxDegreeOfParallelism = maxThreads;
-        else
-            _maxDegreeOfParallelism = Environment.ProcessorCount;
+            _initialNonce = new CtrMode().InitialNonce;
     }
 
     public ushort InitialNonce => _initialNonce;
-
-    public byte[] Process(byte[] data)
-    {
-        if (data == null || data.Length == 0)
-            return Array.Empty<byte>();
-
-        int totalSegments = (data.Length + SegmentSize - 1) / SegmentSize;
-        byte[] result = new byte[data.Length];
-
-        Parallel.For(0, totalSegments, new ParallelOptions { MaxDegreeOfParallelism = _maxDegreeOfParallelism }, segmentIndex =>
-        {
-            ProcessSegment(data, result, segmentIndex, segmentIndex);
-        });
-
-        return result;
-    }
 
     private void ProcessSegment(byte[] input, byte[] result, int localSegmentIndex, int globalSegmentIndex)
     {
@@ -72,7 +43,7 @@ public class A52CtrCipher
             result[offset + i] = (byte)(input[offset + i] ^ keystream[i]);
     }
 
-    public void ProcessStream(Stream input, Stream output)
+    public void Process(Stream input, Stream output)
     {
         int batchSegments = 4096; // 16MB po segmentu, i tacno se uklapa da jedan poziv paralelne obrade bude 16MB odnosno jedan nonce
         int batchBufferSize = batchSegments * SegmentSize;
