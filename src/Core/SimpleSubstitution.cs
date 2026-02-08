@@ -10,7 +10,7 @@ public class SimpleSubstitution
 {
     private readonly byte[] _key;
     private readonly byte[] _inverseKey;
-    private const int SegmentSize = 1024;   // 1KB
+    private const int SegmentSize = 4096;   // 4KB
 
     public SimpleSubstitution(byte[] key)
     {
@@ -127,8 +127,8 @@ public class SimpleSubstitution
     private void ProcessStream(Stream input, Stream output, byte[] table)
     {
         int maxParallelism = Environment.ProcessorCount;
-        int batchSegments = maxParallelism * 64;
-        int batchBufferSize = batchSegments * SegmentSize;
+        int batchSegments = maxParallelism * 1024;          // procesiramo 1024 segmenata po paralelnoj jedinici
+        int batchBufferSize = batchSegments * SegmentSize;  // ukupna veličina bafera za čitanje i obradu u jednom paralelnom pozivu 
 
         byte[] buffer = new byte[batchBufferSize];
         byte[] resultBuffer = new byte[batchBufferSize];
