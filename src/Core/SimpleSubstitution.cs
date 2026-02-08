@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Avalonia.Input;
 
 namespace src.Core;
 
@@ -11,18 +10,6 @@ public class SimpleSubstitution
     private readonly byte[] _key;
     private readonly byte[] _inverseKey;
     private const int SegmentSize = 4096;   // 4KB
-
-    public SimpleSubstitution(byte[] key)
-    {
-        if (key.Length != 256)
-            throw new ArgumentException("key must be 256 bytes long");
-
-        _key = key;
-        _inverseKey = new byte[256];
-
-        for (int i = 0; i < 256; i++)
-            _inverseKey[_key[i]] = (byte)i;
-    }
 
     public SimpleSubstitution(string secretWord)
     {
@@ -55,79 +42,15 @@ public class SimpleSubstitution
         return inverseKey;
     }
 
-    public static byte[] GenerateRandomKey()
-    {
-        byte[] key = new byte[256];
+    public void Encrypt(Stream input, Stream output) => ProcessStream(input, output, _key);
 
-        for (int i = 0; i < 256; i++)
-            key[i] = (byte)i;
 
-        Random rnd = new Random();
-
-        int n = key.Length;
-
-        while (n > 1)
-        {
-            n--;
-            int k = rnd.Next(n + 1);
-            byte value = key[k];
-            key[k] = key[n];
-            key[n] = value;
-        }
-
-        return key;
-    }
-
-    public byte[] Encrypt(byte[] data)
-    {
-        byte[] result = new byte[data.Length];
-
-        int totalSegments = (data.Length + SegmentSize - 1) / SegmentSize;
-
-        Parallel.For(0, totalSegments, segmentIndex =>
-        {
-            int offset = segmentIndex * SegmentSize;
-            int length = Math.Min(SegmentSize, data.Length - offset);
-
-            for (int i = 0; i < length; i++)
-                result[offset + i] = _key[data[offset + i]];
-        });
-
-        return result;
-    }
-
-    public byte[] Decrypt(byte[] data)
-    {
-        byte[] result = new byte[data.Length];
-
-        int totalSegments = (data.Length + SegmentSize - 1) / SegmentSize;
-
-        Parallel.For(0, totalSegments, segmentIndex =>
-        {
-            int offset = segmentIndex * SegmentSize;
-            int length = Math.Min(SegmentSize, data.Length - offset);
-
-            for (int i = 0; i < length; i++)
-                result[offset + i] = _inverseKey[data[offset + i]];
-        });
-
-        return result;
-    }
-
-    public void EncryptStream(Stream input, Stream output)
-    {
-        ProcessStream(input, output, _key);
-    }
-
-    public void DecryptStream(Stream input, Stream output)
-    {
-        ProcessStream(input, output, _inverseKey);
-    }
+    public void Decrypt(Stream input, Stream output) => ProcessStream(input, output, _inverseKey);
 
     private void ProcessStream(Stream input, Stream output, byte[] table)
     {
         int maxParallelism = Environment.ProcessorCount;
-        int batchSegments = maxParallelism * 1024;          // procesiramo 1024 segmenata po paralelnoj jedinici
+        int batchSegments = 1024;          // procesiramo 1024 segmenata po paralelnom pozivu (optimalno za balans izmedju paralelizma i kesa)
         int batchBufferSize = batchSegments * SegmentSize;  // ukupna veličina bafera za čitanje i obradu u jednom paralelnom pozivu 
 
         byte[] buffer = new byte[batchBufferSize];
