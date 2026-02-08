@@ -12,7 +12,7 @@ public class FileMetadata
 
     public string EncryptingAlgorithm { get; set; } = string.Empty;
 
-    public string? Nonce { get; set; } = string.Empty;
+    public ushort? Nonce { get; set; }
 
     public string HashValue { get; set; } = string.Empty;
 
