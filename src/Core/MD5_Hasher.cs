@@ -1,9 +1,11 @@
 using System;
+using System.IO;
 using System.Linq;
 
 namespace src.Core;
 
 // implementirano pomocu https://gist.github.com/ameerkat/07a748c9b571289711ebaf61f4b596e9
+// i dodatno implementirana podrska za stream 
 
 public static class MD5_Hasher
 {
@@ -113,5 +115,123 @@ public static class MD5_Hasher
     private static string GetByteString(uint x)
     {
         return String.Join("", BitConverter.GetBytes(x).Select(y => y.ToString("x2")));
+    }
+
+    public static string CalculateMD5Stream(Stream input)
+    {
+        uint a0 = 0x67452301;
+        uint b0 = 0xefcdab89;
+        uint c0 = 0x98badcfe;
+        uint d0 = 0x10325476;
+
+        long totalBytesRead = 0;
+        byte[] buffer = new byte[64];
+        bool done = false;
+
+        while (!done)
+        {
+            // citamo tacno 64 bajta
+            int bytesRead = ReadFully(input, buffer, 64);
+            totalBytesRead += bytesRead;
+
+            if (bytesRead == 64)
+            {
+                // ako je pun blok procesiramo normalno
+                ProcessBlock(buffer, ref a0, ref b0, ref c0, ref d0);
+            }
+            else
+            {
+                // za poslednji nepun blok dodajem treba padding i duzina
+                long bitLength = totalBytesRead * 8;
+
+                // slucaj 1: ima mesta za padding (0x80) + duzima (8 bajtova) u ovom bloku
+                // to znaci bytesRead <= 55
+                if (bytesRead <= 55)
+                {
+                    byte[] lastBlock = new byte[64];
+                    Array.Copy(buffer, lastBlock, bytesRead);
+                    lastBlock[bytesRead] = 0x80;
+                    // upisujemo duzinu u poslenjih 8 bajtova
+                    byte[] lengthBytes = BitConverter.GetBytes(bitLength);
+                    Array.Copy(lengthBytes, 0, lastBlock, 56, 8);
+                    ProcessBlock(lastBlock, ref a0, ref b0, ref c0, ref d0);
+                }
+                else
+                {
+                    // slucaj 2: nema mesta — treba 2 bloka
+                    // prvi blok: podaci + 0x80 + nule
+                    byte[] block1 = new byte[64];
+                    Array.Copy(buffer, block1, bytesRead);
+                    block1[bytesRead] = 0x80;
+                    ProcessBlock(block1, ref a0, ref b0, ref c0, ref d0);
+
+                    // drugi blok: same nule + dužina na kraju
+                    byte[] block2 = new byte[64];
+                    byte[] lengthBytes = BitConverter.GetBytes(bitLength);
+                    Array.Copy(lengthBytes, 0, block2, 56, 8);
+                    ProcessBlock(block2, ref a0, ref b0, ref c0, ref d0);
+                }
+
+                done = true;
+            }
+        }
+
+        return GetByteString(a0) + GetByteString(b0) + GetByteString(c0) + GetByteString(d0);
+    }
+
+    private static void ProcessBlock(byte[] block, ref uint a0, ref uint b0, ref uint c0, ref uint d0)
+    {
+        uint[] M = new uint[16];
+        for (int j = 0; j < 16; j++)
+            M[j] = BitConverter.ToUInt32(block, j * 4);
+
+        uint A = a0, B = b0, C = c0, D = d0, F = 0, g = 0;
+
+        for (uint k = 0; k < 64; k++)
+        {
+            if (k <= 15)
+            {
+                F = (B & C) | (~B & D);
+                g = k;
+            }
+            else if (k <= 31)
+            {
+                F = (D & B) | (~D & C);
+                g = ((5 * k) + 1) % 16;
+            }
+            else if (k <= 47)
+            {
+                F = B ^ C ^ D;
+                g = ((3 * k) + 5) % 16;
+            }
+            else
+            {
+                F = C ^ (B | ~D);
+                g = (7 * k) % 16;
+            }
+
+            var dtemp = D;
+            D = C;
+            C = B;
+            B = B + leftRotate((A + F + K[k] + M[g]), s[k]);
+            A = dtemp;
+        }
+
+        a0 += A;
+        b0 += B;
+        c0 += C;
+        d0 += D;
+    }
+
+    private static int ReadFully(Stream stream, byte[] buffer, int count)
+    {
+        int totalRead = 0;
+        while (totalRead < count)
+        {
+            int read = stream.Read(buffer, totalRead, count - totalRead);
+            if (read == 0) break;
+            totalRead += read;
+        }
+        return totalRead;
     }
 }
