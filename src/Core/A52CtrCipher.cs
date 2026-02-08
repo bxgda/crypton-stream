@@ -72,7 +72,7 @@ public class A52CtrCipher
             result[offset + i] = (byte)(input[offset + i] ^ keystream[i]);
     }
 
-    private void ProcessStream(Stream input, Stream output)
+    public void ProcessStream(Stream input, Stream output)
     {
         int batchSegments = 4096; // 16MB po segmentu, i tacno se uklapa da jedan poziv paralelne obrade bude 16MB odnosno jedan nonce
         int batchBufferSize = batchSegments * SegmentSize;
