@@ -72,66 +72,49 @@ public static class CryptoManager
         }
     }
 
-    public static FileMetadata UnpackAndDecrypt(Stream inputStram, Stream outputStream, string secretWord)
+    public static FileMetadata ReadMetadata(Stream inputStream)
     {
-        string tempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".tmp");
+        byte[] lenBytes = new byte[4];
+        if (inputStream.Read(lenBytes, 0, 4) < 4)
+            throw new Exception("Invalid header length.");
 
-        try
+        int headerLength = BitConverter.ToInt32(lenBytes, 0);
+        byte[] headerBytes = new byte[headerLength];
+
+        if (inputStream.Read(headerBytes, 0, headerLength) < headerLength)
+            throw new Exception("Incomplete metadata header.");
+
+        var metadata = FileMetadata.FromJson(Encoding.UTF8.GetString(headerBytes));
+
+        if (metadata == null)
+            throw new Exception("Metadata corruption.");
+
+        return metadata;
+    }
+
+    public static void ExecuteDecryption(Stream inputStream, Stream outputStream, string secretWord, FileMetadata metadata)
+    {
+        switch (metadata.EncryptingAlgorithm)
         {
-            byte[] lenBytes = new byte[4];
+            case "A5_2":
+                var a52 = new A52CtrCipher(secretWord, metadata.Nonce);
+                a52.Process(inputStream, outputStream);
+                break;
 
-            if (inputStram.Read(lenBytes, 0, 4) < 4)
-                throw new Exception("Invalid header length.");
+            case "SimpleSubstitution":
+                var sub = new SimpleSubstitution(secretWord);
+                sub.Decrypt(inputStream, outputStream);
+                break;
 
-            int headerLength = BitConverter.ToInt32(lenBytes, 0);
-            byte[] headerBytes = new byte[headerLength];
-
-            inputStram.Read(headerBytes, 0, headerLength);
-
-            var metadata = FileMetadata.FromJson(Encoding.UTF8.GetString(headerBytes));
-
-            if (metadata == null)
-                throw new Exception("Invalid metadata.");
-
-            using var tempStream = new FileStream(
-                tempPath,
-                FileMode.Create,
-                FileAccess.ReadWrite,
-                FileShare.None,
-                4096,
-                FileOptions.DeleteOnClose
-            );
-
-            inputStram.CopyTo(tempStream);
-            tempStream.Seek(0, SeekOrigin.Begin);
-
-            string currentHash = MD5_Hasher.CalculateMD5Stream(tempStream);
-            if (currentHash != metadata.HashValue)
-                throw new Exception("Integrity check failed: hash mismatch.");
-
-            tempStream.Seek(0, SeekOrigin.Begin);
-
-            switch (metadata.EncryptingAlgorithm)
-            {
-                case "A5_2":
-                    var a52 = new A52CtrCipher(secretWord, metadata.Nonce);
-                    a52.Process(tempStream, outputStream);
-                    break;
-
-                case "SimpleSubstitution":
-                    var ss = new SimpleSubstitution(secretWord);
-                    ss.Decrypt(tempStream, outputStream);
-                    break;
-
-                default:
-                    throw new NotSupportedException($"Encryption algorithm {metadata.EncryptingAlgorithm} is not supported.");
-            }
-
-            return metadata;
+            default:
+                throw new NotSupportedException($"Encryption algorithm {metadata.EncryptingAlgorithm} is not supported.");
         }
-        catch (Exception ex)
-        {
-            throw new Exception($"Decryption Error: {ex.Message}", ex);
-        }
+    }
+
+    public static FileMetadata UpackAndDecrypt(Stream inputStream, Stream outputStream, string secretWord)
+    {
+        var metadata = ReadMetadata(inputStream);
+        ExecuteDecryption(inputStream, outputStream, secretWord, metadata);
+        return metadata;
     }
 }
