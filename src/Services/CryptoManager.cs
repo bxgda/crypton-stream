@@ -6,9 +6,9 @@ using src.Core;
 
 namespace src.Services;
 
-public class CryptoManager
+public static class CryptoManager
 {
-    public FileMetadata PackAndEncrypt(Stream inputStram, Stream outputStream, string secretWord, EncryptionAlgorithm algorithm, string originalFileName)
+    public static FileMetadata PackAndEncrypt(Stream inputStram, Stream outputStream, string secretWord, EncryptionAlgorithm algorithm, string originalFileName)
     {
         string tempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".tmp");
 
@@ -72,7 +72,7 @@ public class CryptoManager
         }
     }
 
-    public FileMetadata UnpackAndDecrypt(Stream inputStram, Stream outputStream, string secretWord)
+    public static FileMetadata UnpackAndDecrypt(Stream inputStram, Stream outputStream, string secretWord)
     {
         string tempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".tmp");
 
