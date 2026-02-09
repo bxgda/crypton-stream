@@ -107,7 +107,7 @@ public static class CryptoManager
 
             string currentHash = MD5_Hasher.CalculateMD5Stream(tempStream);
             if (currentHash != metadata.HashValue)
-                throw new Exception("Integritet narušen - MD5 Hash mismatch na kriptovanim podacima!");
+                throw new Exception("Integrity check failed: hash mismatch.");
 
             tempStream.Seek(0, SeekOrigin.Begin);
 
