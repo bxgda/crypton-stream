@@ -4,31 +4,25 @@ using src.Common;
 
 namespace src.Services;
 
-public class Logger
+public static class Logger
 {
-    private readonly string _logFolder;
-    private readonly object _lock = new object();
+    private static readonly object _lock = new object();
 
-    public Logger(string logFolder)
-    {
-        _logFolder = logFolder;
-
-        if (!Directory.Exists(_logFolder))
-            Directory.CreateDirectory(_logFolder);
-    }
-
-    private string GetCurrentLogPath()
+    private static string GetCurrentLogPath()
     {
         string fileName = $"log_{DateTime.Now:yyyy-MM-dd_HH}.txt";
-        return Path.Combine(_logFolder, fileName);
+        return Path.Combine(AppConfig.LogsDirectory, fileName);
     }
 
-    public void Log(string message, FileMetadata? metadata = null)
+    public static void Log(string message, FileMetadata? metadata = null)
     {
         lock (_lock)
         {
             try
             {
+                if (!Directory.Exists(AppConfig.LogsDirectory))
+                    Directory.CreateDirectory(AppConfig.LogsDirectory);
+
                 string logPath = GetCurrentLogPath();
                 string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
@@ -64,7 +58,7 @@ public class Logger
         }
     }
 
-    private string FormatSize(long bytes)
+    private static string FormatSize(long bytes)
     {
         string[] suffix = { "B", "KB", "MB", "GB", "TB" };
         int i;
