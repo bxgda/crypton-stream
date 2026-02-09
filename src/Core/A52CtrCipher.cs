@@ -16,6 +16,8 @@ public class A52CtrCipher
     {
         _key = DeriveKey(secretWord);
 
+        _maxDegreeOfParallelism = Environment.ProcessorCount;
+
         if (nonce != null)
             _initialNonce = (ushort)nonce;
         else
