@@ -2,10 +2,11 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using src.Interfaces;
 
 namespace src.Core;
 
-public class SimpleSubstitution
+public class SimpleSubstitution : ICryptoStrategy
 {
     private readonly byte[] _key;
     private readonly byte[] _inverseKey;
@@ -19,6 +20,14 @@ public class SimpleSubstitution
         _key = GenerateKeyFromSecretWord(secretWord);
         _inverseKey = GenerateInverseKey(_key);
     }
+
+    public void Encrypt(Stream input, Stream output) => ProcessStream(input, output, _key);
+
+    public void Decrypt(Stream input, Stream output) => ProcessStream(input, output, _inverseKey);
+
+    public string AlgorithmName => "SimpleSubstitution";
+
+    public ushort? InitialNonce => null;
 
     public byte[] GenerateKeyFromSecretWord(string secretWord)
     {
@@ -41,11 +50,6 @@ public class SimpleSubstitution
 
         return inverseKey;
     }
-
-    public void Encrypt(Stream input, Stream output) => ProcessStream(input, output, _key);
-
-
-    public void Decrypt(Stream input, Stream output) => ProcessStream(input, output, _inverseKey);
 
     private void ProcessStream(Stream input, Stream output, byte[] table)
     {

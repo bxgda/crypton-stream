@@ -3,12 +3,13 @@ using System.IO;
 using System.Text;
 using src.Common;
 using src.Core;
+using src.Interfaces;
 
 namespace src.Services;
 
 public static class CryptoManager
 {
-    public static FileMetadata PackAndEncrypt(Stream inputStram, Stream outputStream, string secretWord, EncryptionAlgorithm algorithm, string originalFileName)
+    public static FileMetadata PackAndEncrypt(Stream inputStram, Stream outputStream, ICryptoStrategy strategy, string originalFileName)
     {
         string tempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".tmp");
 
@@ -23,24 +24,7 @@ public static class CryptoManager
                 FileOptions.DeleteOnClose
             );
 
-            ushort? nonce = null;
-
-            switch (algorithm)
-            {
-                case EncryptionAlgorithm.A5_2:
-                    var a52 = new A52CtrCipher(secretWord);
-                    nonce = a52.InitialNonce;
-                    a52.Process(inputStram, tempStream);
-                    break;
-
-                case EncryptionAlgorithm.SimpleSubstitution:
-                    var sub = new SimpleSubstitution(secretWord);
-                    sub.Encrypt(inputStram, tempStream);
-                    break;
-
-                default:
-                    throw new NotSupportedException($"Encryption algorithm {algorithm} is not supported.");
-            }
+            strategy.Encrypt(inputStram, tempStream);
 
             tempStream.Seek(0, SeekOrigin.Begin);
             string encryptedHash = MD5_Hasher.CalculateMD5Stream(tempStream);
@@ -50,8 +34,8 @@ public static class CryptoManager
                 FileName = originalFileName,
                 FileSize = tempStream.Length,
                 Timestamp = DateTime.Now,
-                EncryptingAlgorithm = algorithm.ToString(),
-                Nonce = nonce,
+                EncryptingAlgorithm = strategy.AlgorithmName,
+                Nonce = strategy.InitialNonce,
                 HashValue = encryptedHash
             };
 
@@ -66,10 +50,7 @@ public static class CryptoManager
 
             return metadata;
         }
-        catch (Exception ex)
-        {
-            throw new Exception($"CryptoEngine Error: {ex.Message}", ex);
-        }
+        catch (Exception ex) { throw new Exception($"CryptoEngine Error: {ex.Message}", ex); }
     }
 
     public static FileMetadata ReadMetadata(Stream inputStream)
@@ -92,29 +73,8 @@ public static class CryptoManager
         return metadata;
     }
 
-    public static void ExecuteDecryption(Stream inputStream, Stream outputStream, string secretWord, FileMetadata metadata)
+    public static void ExecuteDecryption(Stream inputStream, Stream outputStream, ICryptoStrategy strategy)
     {
-        switch (metadata.EncryptingAlgorithm)
-        {
-            case "A5_2":
-                var a52 = new A52CtrCipher(secretWord, metadata.Nonce);
-                a52.Process(inputStream, outputStream);
-                break;
-
-            case "SimpleSubstitution":
-                var sub = new SimpleSubstitution(secretWord);
-                sub.Decrypt(inputStream, outputStream);
-                break;
-
-            default:
-                throw new NotSupportedException($"Encryption algorithm {metadata.EncryptingAlgorithm} is not supported.");
-        }
-    }
-
-    public static FileMetadata UpackAndDecrypt(Stream inputStream, Stream outputStream, string secretWord)
-    {
-        var metadata = ReadMetadata(inputStream);
-        ExecuteDecryption(inputStream, outputStream, secretWord, metadata);
-        return metadata;
+        strategy.Decrypt(inputStream, outputStream);
     }
 }

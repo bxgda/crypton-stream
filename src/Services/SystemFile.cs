@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using src.Common;
 using src.Core;
+using src.Factories;
+using src.Interfaces;
 
 namespace src.Services;
 
@@ -21,7 +23,9 @@ public static class SystemFile
             using var inputStream = new FileStream(srcPath, FileMode.Open, FileAccess.Read);
             using var outputStream = new FileStream(destPath, FileMode.Create, FileAccess.Write);
 
-            var meta = CryptoManager.PackAndEncrypt(inputStream, outputStream, key, algorithm, Path.GetFileName(srcPath));
+            ICryptoStrategy strategy = CryptoStrategyFactory.CreateForEncryption(algorithm, key);
+
+            var meta = CryptoManager.PackAndEncrypt(inputStream, outputStream, strategy, Path.GetFileName(srcPath));
 
             Logger.Log($"Encrypted file '{srcPath}' to '{destPath}'", meta);
         }
@@ -46,10 +50,12 @@ public static class SystemFile
 
             input.Seek(dataStartPos, SeekOrigin.Begin);
 
+            ICryptoStrategy strategy = CryptoStrategyFactory.CreateForDecryption(metadata.EncryptingAlgorithm, key, metadata.Nonce);
+
             string fullDestPath = Path.Combine(destDirectory, metadata.FileName);
             using var output = new FileStream(fullDestPath, FileMode.Create, FileAccess.Write);
 
-            CryptoManager.ExecuteDecryption(input, output, key, metadata);
+            CryptoManager.ExecuteDecryption(input, output, strategy);
 
             Logger.Log($"Decrypted: {metadata.FileName}", metadata);
         }

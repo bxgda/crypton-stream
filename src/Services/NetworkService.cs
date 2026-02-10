@@ -5,6 +5,8 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using src.Common;
+using src.Factories;
+using src.Interfaces;
 
 namespace src.Services;
 
@@ -33,7 +35,9 @@ public class NetworkService
             using var netStream = client.GetStream();
             using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
 
-            CryptoManager.PackAndEncrypt(fileStream, netStream, key, algorithm, Path.GetFileName(filePath));
+            ICryptoStrategy strategy = CryptoStrategyFactory.CreateForEncryption(algorithm, key);
+
+            CryptoManager.PackAndEncrypt(fileStream, netStream, strategy, Path.GetFileName(filePath));
 
             Logger.Log($"Network: File '{filePath}' sent to: {targetIp}", null);
         }
@@ -64,55 +68,30 @@ public class NetworkService
 
                     // cim dobijemo klijenta, obradjujemo ga u posebnom pod-zadatku 
                     // da ne bismo blokirali ostale koji mozda zele da salju
-                    _ = Task.Run(async () =>
-                    {
-                        string tempIncoming = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".incoming");
-                        try
-                        {
-                            using (var netStream = client.GetStream())
-                            using (var tempStream = new FileStream(tempIncoming, FileMode.Create, FileAccess.Write))
-                            {
-                                await netStream.CopyToAsync(tempStream);
-                            }
-
-                            // Obrada fajla (dekripcija i MD5 provera)
-                            ProcessDownloadedFile(tempIncoming, downloadDirectory, key);
-                        }
-                        catch (Exception) { }
-                        finally { if (File.Exists(tempIncoming)) File.Delete(tempIncoming); }
-                    });
+                    _ = Task.Run(async () => HandleConnection(client, downloadDirectory, key));
                 }
             }
             catch (ObjectDisposedException) { }
             catch (Exception ex)
-            {
-                Logger.Log($"Network critical exception: {ex.Message}", null);
-            }
-            finally
-            {
-                _isListening = false;
-                _listener.Stop();
-            }
-        }, _cts.Token);
+            { Logger.Log($"Network critical exception: {ex.Message}", null); }
+            finally { _isListening = false; _listener.Stop(); }
+        });
     }
 
-    private void ProcessDownloadedFile(string tempPath, string downloadDir, string key)
+    private async Task HandleConnection(TcpClient client, string downloadDir, string key)
     {
+        string tempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".incoming");
         try
         {
-            SystemFile.DecryptFile(tempPath, downloadDir, key);
+            using (var netStream = client.GetStream())
+            using (var tempStream = new FileStream(tempPath, FileMode.Create))
+            {
+                await netStream.CopyToAsync(tempStream);
+            }
 
-            Logger.Log("File received and decrypted successfully.");
+            SystemFile.DecryptFile(tempPath, downloadDir, key);
         }
-        catch (IntegrityException ex)
-        {
-            Logger.Log($"Critical integrity error: {ex.Message}. File discarded.");
-            throw;
-        }
-        catch (Exception ex)
-        {
-            Logger.Log($"System error during decryption: {ex.Message}");
-            throw;
-        }
+        catch (Exception ex) { Logger.Log("Receive Error: " + ex.Message); }
+        finally { if (File.Exists(tempPath)) File.Delete(tempPath); }
     }
 }

@@ -1,10 +1,11 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using src.Interfaces;
 
 namespace src.Core;
 
-public class A52CtrCipher
+public class A52CtrCipher : ICryptoStrategy
 {
     public const int SegmentSize = 4096;   // 4KB - 16MB za svaki nonce
 
@@ -24,7 +25,13 @@ public class A52CtrCipher
             _initialNonce = new CtrMode().InitialNonce;
     }
 
-    public ushort InitialNonce => _initialNonce;
+    public void Encrypt(Stream input, Stream output) => Process(input, output);
+
+    public void Decrypt(Stream input, Stream output) => Process(input, output);
+
+    public string AlgorithmName => "A5_2";
+
+    public ushort? InitialNonce => _initialNonce;
 
     private void ProcessSegment(byte[] input, byte[] result, int localSegmentIndex, int globalSegmentIndex)
     {
@@ -91,5 +98,4 @@ public class A52CtrCipher
 
         return key;
     }
-
 }
