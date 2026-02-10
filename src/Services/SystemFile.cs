@@ -52,7 +52,7 @@ public static class SystemFile
 
             ICryptoStrategy strategy = CryptoStrategyFactory.CreateForDecryption(metadata.EncryptingAlgorithm, key, metadata.Nonce);
 
-            string fullDestPath = Path.Combine(destDirectory, metadata.FileName);
+            string fullDestPath = Path.Combine(destDirectory, "DECRYPTED_" + metadata.FileName);
             using var output = new FileStream(fullDestPath, FileMode.Create, FileAccess.Write);
 
             CryptoManager.ExecuteDecryption(input, output, strategy);
