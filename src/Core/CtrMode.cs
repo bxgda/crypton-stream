@@ -12,7 +12,7 @@ public class CtrMode
 
     public const int MaxCounter = 4096;
     public const int NonceBits = 10;
-    public const int CounerBits = 12;
+    public const int CounterBits = 12;
 
     public CtrMode()
     {
@@ -41,7 +41,7 @@ public class CtrMode
             counter = 0;
         }
 
-        uint frameNumber = ((uint)currentNonce << CounerBits) | (counter & 0xFFF);
+        uint frameNumber = ((uint)currentNonce << CounterBits) | (counter & 0xFFF);
         counter++;
 
         return frameNumber;
