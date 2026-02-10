@@ -12,6 +12,10 @@ public class AppConfig
 
     public static string ReceivedFilesDirectory { get; set; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "received_files");
 
+    public static string WatcherTargetDirectory { get; set; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "watcher_target");
+
+    public static string WatcherOutputDirectory { get; set; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "watcher_output_x");
+
     public static int DefaultPort { get; set; } = 9000;
 
     private static string GenerateRandomSecret(int length = 32)
@@ -30,5 +34,7 @@ public class AppConfig
     {
         if (!Directory.Exists(LogsDirectory)) Directory.CreateDirectory(LogsDirectory);
         if (!Directory.Exists(ReceivedFilesDirectory)) Directory.CreateDirectory(ReceivedFilesDirectory);
+        if (!Directory.Exists(WatcherTargetDirectory)) Directory.CreateDirectory(WatcherTargetDirectory);
+        if (!Directory.Exists(WatcherOutputDirectory)) Directory.CreateDirectory(WatcherOutputDirectory);
     }
 }

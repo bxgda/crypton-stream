@@ -27,104 +27,60 @@ sealed class Program
 
     static void Main(string[] args)
     {
-        // GetCurrentDirectory() u VS Code-u (dotnet run) je koren projekta
+        // 1. Inicijalizacija putanja u korenu projekta
         string projectRoot = Directory.GetCurrentDirectory();
-
-        // Putanje ka folderima - kreiramo ih u root-u projekta
         AppConfig.LogsDirectory = Path.Combine(projectRoot, "logs");
-        AppConfig.ReceivedFilesDirectory = Path.Combine(projectRoot, "decrypted_files");
+        AppConfig.WatcherTargetDirectory = Path.Combine(projectRoot, "Target");
+        AppConfig.WatcherOutputDirectory = Path.Combine(projectRoot, "X");
+
         AppConfig.EnsureDirectoriesExist();
 
-        string encryptedFolder = Path.Combine(projectRoot, "encrypted_files");
-        if (!Directory.Exists(encryptedFolder)) Directory.CreateDirectory(encryptedFolder);
-
-        // --- KONFIGURACIJA TESTA ---
         string tajnaSifra = "Sifra123!";
-        string file1 = "slika.png";      // Fajl u root-u projekta
-        string file2 = "dokument.pdf";   // Fajl u root-u projekta
-        // ---------------------------
 
-        Console.WriteLine($"Radni direktorijum: {projectRoot}");
-        Console.WriteLine("=== Crypto Manager Test Start ===\n");
+        // 2. Kreiranje servisa
+        var watcherService = new FileSystemWatcherService(
+            AppConfig.WatcherTargetDirectory,
+            AppConfig.WatcherOutputDirectory,
+            tajnaSifra
+        );
+
+        Console.WriteLine("=== FileSystemWatcher (FSW) Test Console ===");
+        Console.WriteLine($"Target folder (pratim): {AppConfig.WatcherTargetDirectory}");
+        Console.WriteLine($"Output folder (X):      {AppConfig.WatcherOutputDirectory}");
+        Console.WriteLine("--------------------------------------------");
 
         try
         {
-            // Test 1: A5/2
-            RunTest(projectRoot, file1, encryptedFolder, AppConfig.ReceivedFilesDirectory, tajnaSifra, EncryptionAlgorithm.A5_2);
+            // SIMULACIJA VIEWMODEL-A: Korisnik bira A5/2 i pali FSW
+            Console.WriteLine("\n[VM Simulacija]: Korisnik bira A5_2 i aktivira FSW...");
+            watcherService.Start(EncryptionAlgorithm.A5_2);
 
-            Console.WriteLine("\n" + new string('-', 60) + "\n");
+            Console.WriteLine("\n>>> TEST 1: Ubaci neki fajl u 'Target' folder...");
+            Console.WriteLine(">>> (Čekam detekciju... Pritisni bilo koji taster za promenu algoritma)");
+            Console.ReadKey(true);
 
-            // Test 2: Simple Substitution
-            RunTest(projectRoot, file2, encryptedFolder, AppConfig.ReceivedFilesDirectory, tajnaSifra, EncryptionAlgorithm.SimpleSubstitution);
+            // SIMULACIJA VIEWMODEL-A: Korisnik menja algoritam na SimpleSubstitution
+            Console.WriteLine("\n[VM Simulacija]: Korisnik menja algoritam na SimpleSubstitution...");
+            watcherService.Start(EncryptionAlgorithm.SimpleSubstitution);
+
+            Console.WriteLine("\n>>> TEST 2: Ubaci NOVI fajl u 'Target' folder...");
+            Console.WriteLine(">>> (Sada će biti korišćen SimpleSubstitution. Pritisni 'Q' za kraj)");
+
+            // Drži program budnim dok ne pritisneš Q
+            while (true)
+            {
+                var key = Console.ReadKey(true);
+                if (key.Key == ConsoleKey.Q) break;
+            }
+
+            watcherService.Stop();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Kritična greška: {ex.Message}");
         }
 
-        Console.WriteLine("\nTestiranje završeno. Pritisni bilo koji taster za izlaz...");
-    }
-
-    static void RunTest(string root, string fileName, string encDir, string decDir, string key, EncryptionAlgorithm algo)
-    {
-        string srcPath = Path.Combine(root, fileName);
-
-        // Logika tvoje SystemFile.EncryptFile metode: 
-        // skida ekstenziju i dodaje .crypto (npr. slika.png -> slika.crypto)
-        string encFileName = Path.GetFileNameWithoutExtension(fileName) + ".crypto";
-        string encPath = Path.Combine(encDir, encFileName);
-
-        // Tvoja izmena u SystemFile.DecryptFile: prefiks DECRYPTED_
-        string decPath = Path.Combine(decDir, "DECRYPTED_" + fileName);
-
-        if (!File.Exists(srcPath))
-        {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"[GRESKA]: Izvor nije pronađen: {srcPath}");
-            Console.ResetColor();
-            return;
-        }
-
-        Console.WriteLine($"[Algoritam: {algo}]");
-
-        try
-        {
-            // 1. Kriptovanje
-            SystemFile.EncryptFile(srcPath, encDir, key, algo);
-            Console.WriteLine($" -> Kriptovan: encrypted_files/{encFileName}");
-
-            // 2. Dekriptovanje
-            SystemFile.DecryptFile(encPath, decDir, key);
-            Console.WriteLine($" -> Dekriptovan: decrypted_files/DECRYPTED_{fileName}");
-
-            // 3. Verifikacija (MD5 poredjenje originala i novog fajla)
-            if (File.Exists(decPath))
-            {
-                using var fs1 = new FileStream(srcPath, FileMode.Open, FileAccess.Read);
-                using var fs2 = new FileStream(decPath, FileMode.Open, FileAccess.Read);
-
-                string h1 = MD5_Hasher.CalculateMD5Stream(fs1);
-                string h2 = MD5_Hasher.CalculateMD5Stream(fs2);
-
-                if (h1 == h2)
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine(" [OK] MD5 podudaranje! Fajlovi su identični.");
-                }
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(" [FAIL] MD5 mismatch! Proveri logiku algoritma.");
-                }
-                Console.ResetColor();
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($" [GRESKA tokom obrade]: {ex.Message}");
-            Console.ResetColor();
-        }
+        Console.WriteLine("\n=== Program završen. Proveri logove u 'logs' folderu. ===");
     }
 
 }
