@@ -50,7 +50,10 @@ public static class CryptoManager
 
             return metadata;
         }
-        catch (Exception ex) { throw new Exception($"CryptoEngine Error: {ex.Message}", ex); }
+        catch (Exception ex) 
+        { 
+            throw new Exception($"CryptoEngine Error: {ex.Message}", ex); 
+        }
     }
 
     public static FileMetadata ReadMetadata(Stream inputStream)

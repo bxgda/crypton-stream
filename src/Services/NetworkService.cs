@@ -59,7 +59,7 @@ public class NetworkService
                 while (!_cts.Token.IsCancellationRequested)
                 {
                     // cekako asinhrono na konekciju - ne blokiramo glavnu nit i možemo primati vise konekcija
-                    using var client = await _listener.AcceptTcpClientAsync();
+                    var client = await _listener.AcceptTcpClientAsync();
 
                     // cim dobijemo klijenta, obradjujemo ga u posebnom pod-zadatku 
                     // da ne bismo blokirali ostale koji mozda zele da salju
@@ -88,6 +88,7 @@ public class NetworkService
         string tempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".incoming");
         try
         {
+            using (client)
             using (var netStream = client.GetStream())
             using (var tempStream = new FileStream(tempPath, FileMode.Create))
             {
