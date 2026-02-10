@@ -1,0 +1,151 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:src.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="700"
+             x:Class="src.Views.LocalView"
+             x:DataType="vm:LocalViewModel">
+
+    <Design.DataContext>
+        <vm:LocalViewModel/>
+    </Design.DataContext>
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="36,32" Spacing="24" MaxWidth="680">
+
+            <!-- Page Header -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="Local Encryption" FontSize="26" FontWeight="Bold"
+                           Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock Text="Encrypt or decrypt files on your local machine"
+                           FontSize="14" Foreground="{StaticResource TextMutedBrush}"/>
+            </StackPanel>
+
+            <!-- ═══ INPUT FILE CARD ═══ -->
+            <Border Classes="card">
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="sectionTitle" Text="📄 Input File"/>
+                    <TextBlock Classes="sectionDesc" Text="Select the file you want to process"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Grid.Column="0" Classes="darkInput"
+                                 Text="{Binding InputFilePath}"
+                                 Watermark="No file selected..."
+                                 IsReadOnly="True"/>
+                        <Button Grid.Column="1" Classes="browseBtn"
+                                Content="Browse"
+                                Margin="10,0,0,0"
+                                Command="{Binding BrowseInputFileCommand}"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ═══ OUTPUT FOLDER CARD ═══ -->
+            <Border Classes="card">
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="sectionTitle" Text="📂 Output Folder"/>
+                    <TextBlock Classes="sectionDesc" Text="Choose where to save the processed file"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Grid.Column="0" Classes="darkInput"
+                                 Text="{Binding OutputFolderPath}"
+                                 Watermark="No folder selected..."
+                                 IsReadOnly="True"/>
+                        <Button Grid.Column="1" Classes="browseBtn"
+                                Content="Browse"
+                                Margin="10,0,0,0"
+                                Command="{Binding BrowseOutputFolderCommand}"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ═══ OPERATION MODE CARD ═══ -->
+            <Border Classes="card">
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="sectionTitle" Text="🔄 Operation Mode"/>
+                    <TextBlock Classes="sectionDesc" Text="Choose whether to encrypt or decrypt the file"/>
+                    <Grid ColumnDefinitions="*,*" Margin="0,4,0,0">
+                        <Border Grid.Column="0" CornerRadius="12" Padding="16,14" Margin="0,0,6,0"
+                                Background="{StaticResource BgInputBrush}"
+                                BorderThickness="1.5" BorderBrush="{StaticResource BorderColorBrush}">
+                            <RadioButton GroupName="Mode" IsChecked="{Binding IsEncryptMode}" Classes="optionRadio">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="🔐" FontSize="16" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Encrypt" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </RadioButton>
+                        </Border>
+                        <Border Grid.Column="1" CornerRadius="12" Padding="16,14" Margin="6,0,0,0"
+                                Background="{StaticResource BgInputBrush}"
+                                BorderThickness="1.5" BorderBrush="{StaticResource BorderColorBrush}">
+                            <RadioButton GroupName="Mode" IsChecked="{Binding IsDecryptMode}" Classes="optionRadio">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="🔓" FontSize="16" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Decrypt" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </RadioButton>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ═══ ALGORITHM CARD ═══ -->
+            <Border Classes="card">
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="sectionTitle" Text="🧮 Algorithm"/>
+                    <TextBlock Classes="sectionDesc" Text="Select the encryption algorithm to use"/>
+                    <StackPanel Spacing="8" Margin="0,4,0,0">
+                        <Border CornerRadius="12" Padding="14,12"
+                                Background="{StaticResource BgInputBrush}"
+                                BorderThickness="1" BorderBrush="{StaticResource BorderColorBrush}">
+                            <RadioButton GroupName="Algorithm"
+                                         IsChecked="{Binding IsA52Selected}"
+                                         Classes="optionRadio">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="A5/2 Stream Cipher" FontWeight="Medium"/>
+                                    <TextBlock Text="Fast stream cipher with CTR mode"
+                                               FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                                </StackPanel>
+                            </RadioButton>
+                        </Border>
+                        <Border CornerRadius="12" Padding="14,12"
+                                Background="{StaticResource BgInputBrush}"
+                                BorderThickness="1" BorderBrush="{StaticResource BorderColorBrush}">
+                            <RadioButton GroupName="Algorithm"
+                                         IsChecked="{Binding IsSubstitutionSelected}"
+                                         Classes="optionRadio">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="Simple Substitution" FontWeight="Medium"/>
+                                    <TextBlock Text="Classical substitution cipher"
+                                               FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                                </StackPanel>
+                            </RadioButton>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ═══ EXECUTE BUTTON ═══ -->
+            <Button Classes="primaryBtn"
+                    HorizontalAlignment="Stretch"
+                    Command="{Binding ExecuteCommand}"
+                    IsEnabled="{Binding !IsProcessing}"
+                    Content="{Binding ExecuteButtonText}"/>
+
+            <TextBlock Text="🔑 Secret key is configured in Settings."
+                       FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                       HorizontalAlignment="Center" Margin="0,-12,0,0"/>
+
+            <!-- ═══ STATUS MESSAGE ═══ -->
+            <Border IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                    CornerRadius="12" Padding="16,12"
+                    Margin="0,0,0,20">
+                <TextBlock Text="{Binding StatusMessage}"
+                           HorizontalAlignment="Center"
+                           FontSize="13" FontWeight="Medium"
+                           Name="StatusText"/>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

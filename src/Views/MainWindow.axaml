@@ -3,18 +3,127 @@
         xmlns:vm="using:src.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="700"
         x:Class="src.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Icon="/Assets/avalonia-logo.ico"
-        Title="src">
+        Title="CryptoStream"
+        MinWidth="800"
+        MinHeight="550"
+        Width="1100"
+        Height="700"
+        Background="{StaticResource BgDarkBrush}"
+        ExtendClientAreaToDecorationsHint="False"
+        CanResize="True">
 
     <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    <Grid ColumnDefinitions="240,*">
+        
+        <!-- ═══ LEFT SIDEBAR ═══ -->
+        <Border Grid.Column="0"
+                Background="{StaticResource BgPanelBrush}"
+                BorderBrush="{StaticResource BorderColorBrush}"
+                BorderThickness="0,0,1,0">
+            <DockPanel>
+                <!-- App branding -->
+                <Border DockPanel.Dock="Top" Padding="20,24,20,20">
+                    <StackPanel Spacing="4">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <!-- Lock icon -->
+                            <Border Width="36" Height="36" CornerRadius="10"
+                                    Background="{StaticResource AccentPurpleDimBrush}">
+                                <TextBlock Text="🔒" FontSize="18"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="CryptoStream" FontSize="17" FontWeight="Bold"
+                                           Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <TextBlock Text="Encryption Suite" FontSize="11"
+                                           Foreground="{StaticResource TextMutedBrush}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
 
+                <!-- Divider -->
+                <Border DockPanel.Dock="Top" Height="1"
+                        Background="{StaticResource BorderColorBrush}"
+                        Margin="16,0"/>
+
+                <!-- Navigation -->
+                <StackPanel DockPanel.Dock="Top" Margin="0,12,0,0" Spacing="2">
+                    <TextBlock Text="MENU" FontSize="10" FontWeight="Bold"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               Margin="24,8,0,8" LetterSpacing="1.5"/>
+
+                    <Button Classes="navBtn"
+                            Classes.active="{Binding IsLocalActive}"
+                            Command="{Binding NavigateToCommand}"
+                            CommandParameter="Local">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="📁" FontSize="16" VerticalAlignment="Center"/>
+                            <TextBlock Text="Local" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Classes="navBtn"
+                            Classes.active="{Binding IsNetworkActive}"
+                            Command="{Binding NavigateToCommand}"
+                            CommandParameter="Network">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="🌐" FontSize="16" VerticalAlignment="Center"/>
+                            <TextBlock Text="Network" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Classes="navBtn"
+                            Classes.active="{Binding IsFileWatcherActive}"
+                            Command="{Binding NavigateToCommand}"
+                            CommandParameter="FileWatcher">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="👁" FontSize="16" VerticalAlignment="Center"/>
+                            <TextBlock Text="File System Watcher" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Classes="navBtn"
+                            Classes.active="{Binding IsLogsActive}"
+                            Command="{Binding NavigateToCommand}"
+                            CommandParameter="Logs">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="📋" FontSize="16" VerticalAlignment="Center"/>
+                            <TextBlock Text="Logs" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Classes="navBtn"
+                            Classes.active="{Binding IsSettingsActive}"
+                            Command="{Binding NavigateToCommand}"
+                            CommandParameter="Settings">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="⚙" FontSize="16" VerticalAlignment="Center"/>
+                            <TextBlock Text="Settings" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <!-- Bottom spacer + version -->
+                <Border DockPanel.Dock="Bottom" Padding="20,16">
+                    <TextBlock Text="v1.0.0" FontSize="11"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               HorizontalAlignment="Center"/>
+                </Border>
+                <Border/> <!-- fill remaining space -->
+            </DockPanel>
+        </Border>
+
+        <!-- ═══ MAIN CONTENT AREA ═══ -->
+        <Border Grid.Column="1" Background="{StaticResource BgDarkBrush}">
+            <ContentControl Content="{Binding CurrentPage}" Margin="0"/>
+        </Border>
+
+    </Grid>
 </Window>

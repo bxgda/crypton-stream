@@ -1,0 +1,212 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:src.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="1000"
+             x:Class="src.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+
+    <Design.DataContext>
+        <vm:SettingsViewModel/>
+    </Design.DataContext>
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="36,32" Spacing="24" MaxWidth="680">
+
+            <!-- Page Header -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="Settings" FontSize="26" FontWeight="Bold"
+                           Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock Text="Configure application preferences"
+                           FontSize="14" Foreground="{StaticResource TextMutedBrush}"/>
+            </StackPanel>
+
+            <!-- ═══ SECRET KEY (no section header) ═══ -->
+            <Border Classes="card">
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="sectionTitle" Text="🔑 Secret Key"/>
+                    <TextBlock Classes="sectionDesc" Text="This key is used for all encryption/decryption operations across the app"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Grid.Column="0" Classes="darkInput"
+                                 Text="{Binding SecretKey}"
+                                 Watermark="Enter secret key..."
+                                 RevealPassword="{Binding ShowSecretKey}"
+                                 PasswordChar="●"/>
+                        <Button Grid.Column="1" Classes="browseBtn"
+                                Margin="10,0,0,0"
+                                Command="{Binding ToggleShowSecretCommand}"
+                                Content="{Binding EyeIcon}"
+                                FontSize="18"
+                                Padding="12,10"/>
+                    </Grid>
+                    <TextBlock Text="Shared across Local, Network, and File System Watcher."
+                               FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- ════════════════════════════════════ -->
+            <!-- SECTION: Logs                        -->
+            <!-- ════════════════════════════════════ -->
+            <TextBlock Text="LOGS" FontSize="11" FontWeight="Bold"
+                       Foreground="{StaticResource TextMutedBrush}"
+                       LetterSpacing="1.5" Margin="0,8,0,-12"/>
+
+            <Border Classes="card">
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="sectionTitle" Text="📋 Logs Directory"/>
+                    <TextBlock Classes="sectionDesc" Text="Where application logs are stored"/>
+                    <CheckBox IsChecked="{Binding UseDefaultLogsDir}"
+                              Foreground="{StaticResource TextSecondaryBrush}"
+                              Margin="0,0,0,6">
+                        <TextBlock Text="Use default" FontSize="13"/>
+                    </CheckBox>
+                    <Grid ColumnDefinitions="*,Auto"
+                          IsEnabled="{Binding !UseDefaultLogsDir}">
+                        <TextBox Grid.Column="0" Classes="darkInput"
+                                 Text="{Binding LogsDirectory}"
+                                 Watermark="Select logs directory..."
+                                 IsReadOnly="True"/>
+                        <Button Grid.Column="1" Classes="browseBtn"
+                                Content="Browse"
+                                Margin="10,0,0,0"
+                                Command="{Binding BrowseLogsDirectoryCommand}"/>
+                    </Grid>
+                    <TextBlock FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0">
+                        <TextBlock.Text>
+                            <Binding Path="LogsDirectory" StringFormat="Current: {0}"/>
+                        </TextBlock.Text>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- ════════════════════════════════════ -->
+            <!-- SECTION: Network                     -->
+            <!-- ════════════════════════════════════ -->
+            <TextBlock Text="NETWORK" FontSize="11" FontWeight="Bold"
+                       Foreground="{StaticResource TextMutedBrush}"
+                       LetterSpacing="1.5" Margin="0,8,0,-12"/>
+
+            <Border Classes="card">
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="sectionTitle" Text="🔌 Network Port"/>
+                    <TextBlock Classes="sectionDesc" Text="Port used for sending and receiving files"/>
+                    <TextBox Classes="darkInput"
+                             Text="{Binding Port}"
+                             Watermark="9000"
+                             MaxWidth="200"
+                             HorizontalAlignment="Left"/>
+                </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="sectionTitle" Text="📥 Received Files Directory"/>
+                    <TextBlock Classes="sectionDesc" Text="Where files received from the network are saved"/>
+                    <CheckBox IsChecked="{Binding UseDefaultReceivedDir}"
+                              Foreground="{StaticResource TextSecondaryBrush}"
+                              Margin="0,0,0,6">
+                        <TextBlock Text="Use default" FontSize="13"/>
+                    </CheckBox>
+                    <Grid ColumnDefinitions="*,Auto"
+                          IsEnabled="{Binding !UseDefaultReceivedDir}">
+                        <TextBox Grid.Column="0" Classes="darkInput"
+                                 Text="{Binding ReceivedFilesDirectory}"
+                                 Watermark="Select received files directory..."
+                                 IsReadOnly="True"/>
+                        <Button Grid.Column="1" Classes="browseBtn"
+                                Content="Browse"
+                                Margin="10,0,0,0"
+                                Command="{Binding BrowseReceivedDirectoryCommand}"/>
+                    </Grid>
+                    <TextBlock FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0">
+                        <TextBlock.Text>
+                            <Binding Path="ReceivedFilesDirectory" StringFormat="Current: {0}"/>
+                        </TextBlock.Text>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- ════════════════════════════════════ -->
+            <!-- SECTION: File System Watcher         -->
+            <!-- ════════════════════════════════════ -->
+            <TextBlock Text="FILE SYSTEM WATCHER" FontSize="11" FontWeight="Bold"
+                       Foreground="{StaticResource TextMutedBrush}"
+                       LetterSpacing="1.5" Margin="0,8,0,-12"/>
+
+            <Border Classes="card">
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="sectionTitle" Text="📂 Watcher Target Directory"/>
+                    <TextBlock Classes="sectionDesc" Text="The folder being watched for new files"/>
+                    <CheckBox IsChecked="{Binding UseDefaultWatcherTarget}"
+                              Foreground="{StaticResource TextSecondaryBrush}"
+                              Margin="0,0,0,6">
+                        <TextBlock Text="Use default" FontSize="13"/>
+                    </CheckBox>
+                    <Grid ColumnDefinitions="*,Auto"
+                          IsEnabled="{Binding !UseDefaultWatcherTarget}">
+                        <TextBox Grid.Column="0" Classes="darkInput"
+                                 Text="{Binding WatcherTargetDirectory}"
+                                 Watermark="Select target directory..."
+                                 IsReadOnly="True"/>
+                        <Button Grid.Column="1" Classes="browseBtn"
+                                Content="Browse"
+                                Margin="10,0,0,0"
+                                Command="{Binding BrowseWatcherTargetCommand}"/>
+                    </Grid>
+                    <TextBlock FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0">
+                        <TextBlock.Text>
+                            <Binding Path="WatcherTargetDirectory" StringFormat="Current: {0}"/>
+                        </TextBlock.Text>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+                <StackPanel Spacing="8">
+                    <TextBlock Classes="sectionTitle" Text="📁 Watcher Output Directory"/>
+                    <TextBlock Classes="sectionDesc" Text="Where encrypted files from the watcher are saved"/>
+                    <CheckBox IsChecked="{Binding UseDefaultWatcherOutput}"
+                              Foreground="{StaticResource TextSecondaryBrush}"
+                              Margin="0,0,0,6">
+                        <TextBlock Text="Use default" FontSize="13"/>
+                    </CheckBox>
+                    <Grid ColumnDefinitions="*,Auto"
+                          IsEnabled="{Binding !UseDefaultWatcherOutput}">
+                        <TextBox Grid.Column="0" Classes="darkInput"
+                                 Text="{Binding WatcherOutputDirectory}"
+                                 Watermark="Select output directory..."
+                                 IsReadOnly="True"/>
+                        <Button Grid.Column="1" Classes="browseBtn"
+                                Content="Browse"
+                                Margin="10,0,0,0"
+                                Command="{Binding BrowseWatcherOutputCommand}"/>
+                    </Grid>
+                    <TextBlock FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0">
+                        <TextBlock.Text>
+                            <Binding Path="WatcherOutputDirectory" StringFormat="Current: {0}"/>
+                        </TextBlock.Text>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- ═══ SAVE BUTTON ═══ -->
+            <Button Classes="primaryBtn"
+                    HorizontalAlignment="Stretch"
+                    Command="{Binding SaveCommand}"
+                    Content="💾  Save Settings"/>
+
+            <!-- ═══ STATUS MESSAGE ═══ -->
+            <Border IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                    CornerRadius="12" Padding="16,12"
+                    Margin="0,0,0,20">
+                <TextBlock Text="{Binding StatusMessage}"
+                           HorizontalAlignment="Center"
+                           FontSize="13" FontWeight="Medium"
+                           Name="StatusText"/>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -12,15 +12,9 @@ namespace src.Services;
 
 public class NetworkService
 {
-    private int Port = AppConfig.DefaultPort;
     private TcpListener _listener;
     private CancellationTokenSource _cts;
     private bool _isListening;
-
-    public NetworkService()
-    {
-        _listener = new TcpListener(IPAddress.Any, Port);
-    }
 
     public async Task SendFileAsync(string filePath, string targetIp, string key, EncryptionAlgorithm algorithm)
     {
@@ -28,7 +22,7 @@ public class NetworkService
         {
             using var client = new TcpClient();
 
-            var connectTask = client.ConnectAsync(targetIp, Port);
+            var connectTask = client.ConnectAsync(targetIp, AppConfig.DefaultPort);
             if (await Task.WhenAny(connectTask, Task.Delay(5000)) != connectTask)
                 throw new Exception("Connection timeout. Is the other student listening?");
 
@@ -56,6 +50,7 @@ public class NetworkService
 
         Task.Run(async () =>
         {
+            _listener = new TcpListener(IPAddress.Any, AppConfig.DefaultPort);
             _listener.Start();
             Logger.Log("Network: Listening started...", null);
 
@@ -76,6 +71,16 @@ public class NetworkService
             { Logger.Log($"Network critical exception: {ex.Message}", null); }
             finally { _isListening = false; _listener.Stop(); }
         });
+    }
+
+    public void StopListening()
+    {
+        if (!_isListening) return;
+
+        _cts?.Cancel();
+        _listener?.Stop();
+        _isListening = false;
+        Logger.Log("Network: Listening stopped.", null);
     }
 
     private async Task HandleConnection(TcpClient client, string downloadDir, string key)
