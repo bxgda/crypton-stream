@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using src.Interfaces;
 
 namespace src.Core;
@@ -53,36 +52,56 @@ public class SimpleSubstitution : ICryptoStrategy
 
     private void ProcessStream(Stream input, Stream output, byte[] table)
     {
-        int maxParallelism = Environment.ProcessorCount;
-        int batchSegments = 1024;          // procesiramo 1024 segmenata po paralelnom pozivu (optimalno za balans izmedju paralelizma i kesa)
-        int batchBufferSize = batchSegments * SegmentSize;  // ukupna veličina bafera za čitanje i obradu u jednom paralelnom pozivu 
+        // int maxParallelism = Environment.ProcessorCount;
+        // int batchSegments = 1024;          // procesiramo 1024 segmenata po paralelnom pozivu (optimalno za balans izmedju paralelizma i kesa)
+        // int batchBufferSize = batchSegments * SegmentSize;  // ukupna veličina bafera za čitanje i obradu u jednom paralelnom pozivu 
 
-        byte[] buffer = new byte[batchBufferSize];
-        byte[] resultBuffer = new byte[batchBufferSize];
+        // byte[] buffer = new byte[batchBufferSize];
+        // byte[] resultBuffer = new byte[batchBufferSize];
+
+        // int bytesRead;
+
+        // while (true)
+        // {
+        //     bytesRead = ReadStream(input, buffer, batchBufferSize);
+
+        //     if (bytesRead == 0)
+        //         break;
+
+        //     int actualSegments = (bytesRead + SegmentSize - 1) / SegmentSize;
+        //     int totalBytes = bytesRead;
+
+        //     Parallel.For(0, actualSegments, new ParallelOptions { MaxDegreeOfParallelism = maxParallelism },
+        //         segmentIndex =>
+        //         {
+        //             int offset = segmentIndex * SegmentSize;
+        //             int length = Math.Min(SegmentSize, totalBytes - offset);
+
+        //             for (int i = 0; i < length; i++)
+        //                 resultBuffer[offset + i] = table[buffer[offset + i]];
+        //         });
+
+        //     output.Write(resultBuffer, 0, bytesRead);
+        // }
+
+        // ovo je ipak brze od paralelne verzije zato sto je tabela mala i cela se uklapa u L1 cache
+        // pa je direktan lookup brzi od paralelne obrade sa overheadom sinhronizacije i raspodele posla
+
+        const int bufferSize = 16 * 1024 * 1024;
+        byte[] buffer = new byte[bufferSize];
 
         int bytesRead;
-
         while (true)
         {
-            bytesRead = ReadStream(input, buffer, batchBufferSize);
+            bytesRead = ReadStream(input, buffer, bufferSize);
 
             if (bytesRead == 0)
                 break;
 
-            int actualSegments = (bytesRead + SegmentSize - 1) / SegmentSize;
-            int totalBytes = bytesRead;
+            for (int i = 0; i < bytesRead; i++)
+                buffer[i] = table[buffer[i]];
 
-            Parallel.For(0, actualSegments, new ParallelOptions { MaxDegreeOfParallelism = maxParallelism },
-                segmentIndex =>
-                {
-                    int offset = segmentIndex * SegmentSize;
-                    int length = Math.Min(SegmentSize, totalBytes - offset);
-
-                    for (int i = 0; i < length; i++)
-                        resultBuffer[offset + i] = table[buffer[offset + i]];
-                });
-
-            output.Write(resultBuffer, 0, bytesRead);
+            output.Write(buffer, 0, bytesRead);
         }
     }
 

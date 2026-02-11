@@ -111,10 +111,13 @@
             </Border>
 
             <!-- ═══ ALGORITHM CARD ═══ -->
-            <Border Classes="card">
+            <Border Classes="card" IsEnabled="{Binding IsEncryptMode}">
                 <StackPanel Spacing="8">
                     <TextBlock Classes="sectionTitle" Text="🧮 Algorithm"/>
                     <TextBlock Classes="sectionDesc" Text="Select the encryption algorithm to use"/>
+                    <TextBlock Text="Algorithm is auto-detected from file header during decryption."
+                               FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                               IsVisible="{Binding IsDecryptMode}"/>
                     <StackPanel Spacing="8" Margin="0,4,0,0">
                         <Border CornerRadius="12" Padding="14,12"
                                 Background="{StaticResource BgInputBrush}"

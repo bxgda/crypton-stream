@@ -7,7 +7,7 @@ namespace src.Core;
 
 public class A52CtrCipher : ICryptoStrategy
 {
-    public const int SegmentSize = 4096;   // 4KB - 16MB za svaki nonce
+    public const int SegmentSize = 4096; // 256KB po segmentu
 
     private readonly ulong _key;
     private readonly ushort _initialNonce;
@@ -46,15 +46,16 @@ public class A52CtrCipher : ICryptoStrategy
         uint frameNumber = ctr.NextFrameNumber();
 
         var a52 = new A5_2(_key, frameNumber);
-        byte[] keystream = a52.GenerateKeystream(segmentLength);
+        a52.GenerateKeystream(segmentLength, offset, result);
 
         for (int i = 0; i < segmentLength; i++)
-            result[offset + i] = (byte)(input[offset + i] ^ keystream[i]);
+            result[offset + i] ^= input[offset + i];
     }
 
     public void Process(Stream input, Stream output)
     {
-        int batchSegments = 4096; // 16MB po segmentu, i tacno se uklapa da jedan poziv paralelne obrade bude 16MB odnosno jedan nonce
+        // 4096 16MB po segmentui i tacno se uklapa da jedan poziv paralelne obrade bude 16MB odnosno jedan nonce
+        int batchSegments = 4096;
         int batchBufferSize = batchSegments * SegmentSize;
 
         byte[] buffer = new byte[batchBufferSize];
@@ -65,7 +66,8 @@ public class A52CtrCipher : ICryptoStrategy
 
         while (true)
         {
-            bytesRead = input.Read(buffer, 0, batchBufferSize);
+            // bytesRead = input.Read(buffer, 0, batchBufferSize);
+            bytesRead = ReadFullStream(input, buffer, batchBufferSize);
 
             if (bytesRead == 0)
                 break;
@@ -97,5 +99,17 @@ public class A52CtrCipher : ICryptoStrategy
         key ^= key >> 33;
 
         return key;
+    }
+
+    private int ReadFullStream(Stream stream, byte[] buffer, int count)
+    {
+        int totalRead = 0;
+        int read;
+        while (count > 0 && (read = stream.Read(buffer, totalRead, count)) > 0)
+        {
+            totalRead += read;
+            count -= read;
+        }
+        return totalRead;
     }
 }
