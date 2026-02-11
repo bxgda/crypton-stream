@@ -42,6 +42,18 @@ Custom streaming MD5 implementation integrated via `MD5StreamWrapper` — a Stre
 
 <br>
 
+## 🚀 Getting Started
+
+**Prerequisites:** [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
+
+```bash
+git clone https://github.com/bxgda/crpyton-stream.git
+cd crpyton-stream/src
+dotnet run
+```
+
+<br>
+
 ## 📸 Screenshots
 
 <p align="center">
