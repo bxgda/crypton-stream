@@ -28,7 +28,7 @@ public static class CryptoManager
 
             var md5 = new MD5_Hasher();
 
-            using (var wrapperStream = new MD5StreamWrapper(tempStream, md5))
+            using (var wrapperStream = new MD5StreamWrapper(tempStream, md5, true))
             {
                 strategy.Encrypt(inputStram, wrapperStream);
                 wrapperStream.Flush();
@@ -94,7 +94,7 @@ public static class CryptoManager
 
         var md5 = new MD5_Hasher();
 
-        using (var hashStream = new MD5StreamWrapper(inputStream, md5))
+        using (var hashStream = new MD5StreamWrapper(inputStream, md5, true))
         {
             strategy.Decrypt(hashStream, outputStream);
         }

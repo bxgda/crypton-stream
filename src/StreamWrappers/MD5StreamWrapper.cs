@@ -7,11 +7,13 @@ public class MD5StreamWrapper : Stream
 {
     private readonly Stream _baseStream;
     private readonly MD5_Hasher _md5;
+    private readonly bool _leaveOpen;
 
-    public MD5StreamWrapper(Stream baseStream, MD5_Hasher md5)
+    public MD5StreamWrapper(Stream baseStream, MD5_Hasher md5, bool leaveOpen = false)
     {
         _baseStream = baseStream;
         _md5 = md5;
+        _leaveOpen = leaveOpen; // da ne bi zatvaramo bazni stream kad se ovaj wrapper zatvori
     }
 
     public override int Read(byte[] buffer, int offset, int count)
@@ -56,7 +58,7 @@ public class MD5StreamWrapper : Stream
     // kad zatvorimo ovaj wrapper zatvoricemo i bazni stream
     protected override void Dispose(bool disposing)
     {
-        if (disposing)
+        if (disposing && !_leaveOpen)
         {
             _baseStream.Dispose();
         }
