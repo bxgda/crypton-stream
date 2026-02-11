@@ -85,19 +85,41 @@ public class NetworkService
 
     private async Task HandleConnection(TcpClient client, string downloadDir, string key)
     {
-        string tempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".incoming");
+        string fullDestPath = null;
+        bool success = false;
+
         try
         {
             using (client)
             using (var netStream = client.GetStream())
-            using (var tempStream = new FileStream(tempPath, FileMode.Create))
             {
-                await netStream.CopyToAsync(tempStream);
-            }
+                var metadata = CryptoManager.ReadMetadata(netStream);
 
-            SystemFile.DecryptFile(tempPath, downloadDir, key);
+                Logger.Log($"Network: Receiving file '{metadata.FileName}'...", null);
+
+                if (!Directory.Exists(downloadDir)) Directory.CreateDirectory(downloadDir);
+
+                fullDestPath = Path.Combine(downloadDir, "DECRYPTED_" + metadata.FileName);
+
+                using (var outputFs = new FileStream(fullDestPath, FileMode.Create, FileAccess.Write, FileShare.None, 65536))
+                {
+                    CryptoManager.DecryptAndVerify(netStream, outputFs, metadata, key);
+                }
+
+                success = true;
+                Logger.Log($"Network: Successfully received and decrypted '{metadata.FileName}'", metadata);
+            }
         }
-        catch (Exception ex) { Logger.Log("Receive Error: " + ex.Message); }
-        finally { if (File.Exists(tempPath)) File.Delete(tempPath); }
+        catch (Exception ex)
+        {
+            Logger.Log($"Network Receive Error: {ex.Message}", null);
+
+            // ako ne valja onda brisemo fajl
+            if (!success && fullDestPath != null && File.Exists(fullDestPath))
+            {
+                try { File.Delete(fullDestPath); } catch { }
+                Logger.Log($"Network: Corrupted file deleted '{fullDestPath}'", null);
+            }
+        }
     }
 }

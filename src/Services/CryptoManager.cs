@@ -3,7 +3,9 @@ using System.IO;
 using System.Text;
 using src.Common;
 using src.Core;
+using src.Factories;
 using src.Interfaces;
+using src.StreamWrappers;
 
 namespace src.Services;
 
@@ -20,14 +22,19 @@ public static class CryptoManager
                 FileMode.Create,
                 FileAccess.ReadWrite,
                 FileShare.None,
-                4096,
+                65536, // 64KB buffer
                 FileOptions.DeleteOnClose
             );
 
-            strategy.Encrypt(inputStram, tempStream);
+            var md5 = new MD5_Hasher();
 
-            tempStream.Seek(0, SeekOrigin.Begin);
-            string encryptedHash = MD5_Hasher.CalculateMD5Stream(tempStream);
+            using (var wrapperStream = new MD5StreamWrapper(tempStream, md5))
+            {
+                strategy.Encrypt(inputStram, wrapperStream);
+                wrapperStream.Flush();
+            }
+
+            string encryptedHash = md5.FinalizeHash();
 
             var metadata = new FileMetadata
             {
@@ -50,9 +57,9 @@ public static class CryptoManager
 
             return metadata;
         }
-        catch (Exception ex) 
-        { 
-            throw new Exception($"CryptoEngine Error: {ex.Message}", ex); 
+        catch (Exception ex)
+        {
+            throw new Exception($"CryptoEngine Error: {ex.Message}", ex);
         }
     }
 
@@ -76,8 +83,27 @@ public static class CryptoManager
         return metadata;
     }
 
-    public static void ExecuteDecryption(Stream inputStream, Stream outputStream, ICryptoStrategy strategy)
+    // public static void ExecuteDecryption(Stream inputStream, Stream outputStream, ICryptoStrategy strategy)
+    // {
+    //     strategy.Decrypt(inputStream, outputStream);
+    // }
+
+    public static void DecryptAndVerify(Stream inputStream, Stream outputStream, FileMetadata metadata, string key)
     {
-        strategy.Decrypt(inputStream, outputStream);
+        ICryptoStrategy strategy = CryptoStrategyFactory.CreateForDecryption(metadata.EncryptingAlgorithm, key, metadata.Nonce);
+
+        var md5 = new MD5_Hasher();
+
+        using (var hashStream = new MD5StreamWrapper(inputStream, md5))
+        {
+            strategy.Decrypt(hashStream, outputStream);
+        }
+
+        string calculatedHash = md5.FinalizeHash();
+
+        if (calculatedHash != metadata.HashValue)
+        {
+            throw new Exception("Security Alert: Hash mismatch! File is corrupted or intercepted.");
+        }
     }
 }

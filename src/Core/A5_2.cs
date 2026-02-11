@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace src.Core;
 
@@ -66,12 +67,14 @@ public class A5_2
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ClockRegister(ref uint reg, uint mask, uint taps)
     {
         uint feedback = Parity(reg & taps);
         reg = ((reg << 1) | feedback) & mask;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ClockAllRegisters()
     {
         ClockRegister(ref _r1, Mask1, Taps1);
@@ -80,6 +83,7 @@ public class A5_2
         ClockRegister(ref _r4, Mask4, Taps4);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ClockWithControl()
     {
         uint p1 = (_r4 >> R4ClockBit1) & 1;
@@ -98,11 +102,13 @@ public class A5_2
         ClockRegister(ref _r4, Mask4, Taps4);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private uint GetOutputBit()
     {
         return ((_r1 >> 18) ^ (_r2 >> 21) ^ (_r3 >> 22)) & 1;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static uint Parity(uint n)
     {
         n ^= n >> 16;
