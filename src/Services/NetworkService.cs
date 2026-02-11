@@ -31,7 +31,10 @@ public class NetworkService
 
             ICryptoStrategy strategy = CryptoStrategyFactory.CreateForEncryption(algorithm, key);
 
-            CryptoManager.PackAndEncrypt(fileStream, netStream, strategy, Path.GetFileName(filePath));
+            await Task.Run(() =>
+            {
+                CryptoManager.PackAndEncrypt(fileStream, netStream, strategy, Path.GetFileName(filePath));
+            });
 
             Logger.Log($"Network: File '{filePath}' sent to: {targetIp}", null);
         }
