@@ -7,7 +7,7 @@ namespace src.Core;
 
 public class A52CtrCipher : ICryptoStrategy
 {
-    public const int SegmentSize = 1024 * 1024; // 1MB (bilo je 4096)
+    public const int SegmentSize = 256 * 1024; // 256KB po segmentu
 
     private readonly ulong _key;
     private readonly ushort _initialNonce;
@@ -46,16 +46,16 @@ public class A52CtrCipher : ICryptoStrategy
         uint frameNumber = ctr.NextFrameNumber();
 
         var a52 = new A5_2(_key, frameNumber);
-        byte[] keystream = a52.GenerateKeystream(segmentLength);
+        a52.GenerateKeystream(segmentLength, offset, result);
 
         for (int i = 0; i < segmentLength; i++)
-            result[offset + i] = (byte)(input[offset + i] ^ keystream[i]);
+            result[offset + i] ^= input[offset + i];
     }
 
     public void Process(Stream input, Stream output)
     {
         // int batchSegments = 4096; // 16MB po segmentu, i tacno se uklapa da jedan poziv paralelne obrade bude 16MB odnosno jedan nonce
-        int batchSegments = 16; // 16MB po segmentu, i tacno se uklapa da jedan poziv paralelne obrade bude 16MB odnosno jedan nonce
+        int batchSegments = Environment.ProcessorCount * 4;
         int batchBufferSize = batchSegments * SegmentSize;
 
         byte[] buffer = new byte[batchBufferSize];

@@ -119,22 +119,18 @@ public class A5_2
         return n & 1;
     }
 
-    public byte[] GenerateKeystream(int length)
+    public void GenerateKeystream(int length, int offset, byte[] buffer)
     {
-        byte[] keystream = new byte[length];
-
         for (int i = 0; i < length; i++)
         {
             byte b = 0;
             for (int bit = 0; bit < 8; bit++)
             {
                 ClockWithControl();
-                uint outBit = GetOutputBit();
-                b = (byte)((b << 1) | outBit);
+                b = (byte)((b << 1) | GetOutputBit());
             }
-            keystream[i] = b;
+            buffer[offset + i] = b;
         }
 
-        return keystream;
     }
 }
