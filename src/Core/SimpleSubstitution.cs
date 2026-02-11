@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using src.Interfaces;
 
 namespace src.Core;
@@ -85,6 +84,9 @@ public class SimpleSubstitution : ICryptoStrategy
         //     output.Write(resultBuffer, 0, bytesRead);
         // }
 
+        // ovo je ipak brze od paralelne verzije zato sto je tabela mala i cela se uklapa u L1 cache
+        // pa je direktan lookup brzi od paralelne obrade sa overheadom sinhronizacije i raspodele posla
+
         const int bufferSize = 16 * 1024 * 1024;
         byte[] buffer = new byte[bufferSize];
 
@@ -96,7 +98,6 @@ public class SimpleSubstitution : ICryptoStrategy
             if (bytesRead == 0)
                 break;
 
-            // Direktan lookup - tabela je cela u L1 cache
             for (int i = 0; i < bytesRead; i++)
                 buffer[i] = table[buffer[i]];
 

@@ -87,11 +87,6 @@ public static class CryptoManager
         return metadata;
     }
 
-    // public static void ExecuteDecryption(Stream inputStream, Stream outputStream, ICryptoStrategy strategy)
-    // {
-    //     strategy.Decrypt(inputStream, outputStream);
-    // }
-
     public static void DecryptAndVerify(Stream inputStream, Stream outputStream, FileMetadata metadata, string key)
     {
         ICryptoStrategy strategy = CryptoStrategyFactory.CreateForDecryption(metadata.EncryptingAlgorithm, key, metadata.Nonce);
