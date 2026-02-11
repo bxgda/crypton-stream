@@ -4,7 +4,7 @@
 [![Avalonia UI](https://img.shields.io/badge/Avalonia%20UI-11.3-%237B2BFC?style=for-the-badge)](https://avaloniaui.net/)
 [![C#](https://img.shields.io/badge/C%23-13-%23239120?style=for-the-badge&logo=csharp)](https://learn.microsoft.com/en-us/dotnet/csharp/)
 
-**Crypton Stream** is a cross-platform desktop application for secure file encryption, decryption, and transfer. It supports two cipher algorithms, encrypted file transfer over TCP, and an automatic file system watcher that encrypts new files on the fly. File integrity is verified using MD5 hashing embedded in a custom binary file format.
+**Crypton Stream** is a cross-platform desktop application for secure file encryption, decryption, and transfer, built with **.NET 10** and **Avalonia UI**. It supports two cipher algorithms, encrypted file transfer over TCP, and an automatic file system watcher that encrypts new files on the fly. File integrity is verified using MD5 hashing embedded in a custom binary file format.
 
 <br>
 
