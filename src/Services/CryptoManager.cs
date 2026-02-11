@@ -61,6 +61,10 @@ public static class CryptoManager
         {
             throw new Exception($"CryptoEngine Error: {ex.Message}", ex);
         }
+        finally
+        {
+            if (File.Exists(tempPath)) File.Delete(tempPath);
+        }
     }
 
     public static FileMetadata ReadMetadata(Stream inputStream)
