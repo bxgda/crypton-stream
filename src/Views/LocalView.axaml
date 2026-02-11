@@ -23,6 +23,27 @@
                            FontSize="14" Foreground="{StaticResource TextMutedBrush}"/>
             </StackPanel>
 
+            <!-- ═══ EXECUTE BUTTON ═══ -->
+            <Button Classes="primaryBtn"
+                    HorizontalAlignment="Stretch"
+                    Command="{Binding ExecuteCommand}"
+                    IsEnabled="{Binding !IsProcessing}"
+                    Content="{Binding ExecuteButtonText}"/>
+
+            <TextBlock Text="🔑 Secret key is configured in Settings."
+                       FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                       HorizontalAlignment="Center" Margin="0,-12,0,0"/>
+
+            <!-- ═══ STATUS MESSAGE ═══ -->
+            <Border IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                    CornerRadius="12" Padding="16,12"
+                    Margin="0,-8,0,0">
+                <TextBlock Text="{Binding StatusMessage}"
+                           HorizontalAlignment="Center"
+                           FontSize="13" FontWeight="Medium"
+                           Name="StatusText"/>
+            </Border>
+
             <!-- ═══ INPUT FILE CARD ═══ -->
             <Border Classes="card">
                 <StackPanel Spacing="8">
@@ -123,27 +144,6 @@
                         </Border>
                     </StackPanel>
                 </StackPanel>
-            </Border>
-
-            <!-- ═══ EXECUTE BUTTON ═══ -->
-            <Button Classes="primaryBtn"
-                    HorizontalAlignment="Stretch"
-                    Command="{Binding ExecuteCommand}"
-                    IsEnabled="{Binding !IsProcessing}"
-                    Content="{Binding ExecuteButtonText}"/>
-
-            <TextBlock Text="🔑 Secret key is configured in Settings."
-                       FontSize="11" Foreground="{StaticResource TextMutedBrush}"
-                       HorizontalAlignment="Center" Margin="0,-12,0,0"/>
-
-            <!-- ═══ STATUS MESSAGE ═══ -->
-            <Border IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                    CornerRadius="12" Padding="16,12"
-                    Margin="0,0,0,20">
-                <TextBlock Text="{Binding StatusMessage}"
-                           HorizontalAlignment="Center"
-                           FontSize="13" FontWeight="Medium"
-                           Name="StatusText"/>
             </Border>
 
         </StackPanel>

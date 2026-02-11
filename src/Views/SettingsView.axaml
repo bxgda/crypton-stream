@@ -23,6 +23,12 @@
                            FontSize="14" Foreground="{StaticResource TextMutedBrush}"/>
             </StackPanel>
 
+            <!-- ═══ SAVE BUTTON ═══ -->
+            <Button Classes="primaryBtn"
+                    HorizontalAlignment="Stretch"
+                    Command="{Binding SaveCommand}"
+                    Content="💾  Save Settings"/>
+
             <!-- ═══ SECRET KEY (no section header) ═══ -->
             <Border Classes="card">
                 <StackPanel Spacing="8">
@@ -190,12 +196,6 @@
                     </TextBlock>
                 </StackPanel>
             </Border>
-
-            <!-- ═══ SAVE BUTTON ═══ -->
-            <Button Classes="primaryBtn"
-                    HorizontalAlignment="Stretch"
-                    Command="{Binding SaveCommand}"
-                    Content="💾  Save Settings"/>
 
             <!-- ═══ STATUS MESSAGE ═══ -->
             <Border IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
